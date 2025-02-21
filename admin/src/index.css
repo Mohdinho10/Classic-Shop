@@ -1,0 +1,50 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  section {
+    @apply py-[75px];
+  }
+}
+
+@layer components {
+  .container {
+    @apply mx-auto w-[1226px] max-w-full p-6;
+  }
+}
+
+/* ::-webkit-scrollbar {
+  display: none;
+} */
+
+.active {
+  border: solid 1px rgb(75 85 99 / var(--tw-bg-opacity, 1));
+  background: #ccc;
+  color: #fff !important;
+}
+
+select,
+input,
+textarea {
+  border: solid 1px #ccc;
+  outline-color: solid 1px rgb(75 85 99 / var(--tw-bg-opacity, 1));
+  border-radius: 4px;
+}
+
+.truncate {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media only screen and (max-width: 1024px) {
+  .container {
+    @apply w-full;
+  }
+  section {
+    @apply py-[35px];
+  }
+}

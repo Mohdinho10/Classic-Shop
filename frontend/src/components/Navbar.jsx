@@ -7,15 +7,33 @@ import { useShop } from "../context/ShopContext";
 import { Link, useNavigate } from "react-router-dom";
 import CartItem from "./CartItem";
 import { products } from "../assets/assets";
+import { useSelector } from "react-redux";
+import { logout } from "../slices/authSlice";
+import { useLogoutMutation } from "../slices/userApiSlice";
+import { useDispatch } from "react-redux";
 
 function Navbar() {
   const { search, setSearch, getCartCount, cartItems } = useShop();
   const [isSearchVisible, setIsSearchVisible] = useState(false); // State to manage search visibility
   const [openCart, setOpenCart] = useState(false);
   const [cartData, setCartData] = useState([]);
+  console.log(cartData);
   const { getCartAmount } = useShop();
+  const { userInfo } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = false;
+
+  const [logoutApiCall] = useLogoutMutation();
+
+  const logoutHandler = async () => {
+    try {
+      await logoutApiCall().unwrap();
+      dispatch(logout());
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     const tempData = [];
@@ -37,6 +55,8 @@ function Navbar() {
   const toggleSearch = () => {
     setIsSearchVisible((prev) => !prev); // Toggle search visibility
   };
+
+  console.log(products);
 
   return (
     <>
@@ -72,17 +92,27 @@ function Navbar() {
           )}
 
           <div className="group relative">
-            <Link to={!user ? "/login" : ""}>
+            <Link to={!userInfo ? "/login" : ""}>
               <FaRegUser className="h-6 w-6 cursor-pointer" />
             </Link>
             <div className="dropdown-menu absolute right-0 z-50 hidden pt-4 group-hover:block">
-              {user && (
+              {userInfo && (
                 <div className="z-10 flex w-36 flex-col gap-2 bg-slate-100 px-5 py-3 text-gray-700">
                   <p className="cursor-pointer hover:text-balance">
                     My profile
                   </p>
-                  <p className="cursor-pointer hover:text-balance">Orders</p>
-                  <p className="cursor-pointer hover:text-balance">Logout</p>
+                  <Link
+                    to={"/orders"}
+                    className="cursor-pointer hover:text-balance"
+                  >
+                    Orders
+                  </Link>
+                  <p
+                    onClick={logoutHandler}
+                    className="cursor-pointer hover:text-balance"
+                  >
+                    Logout
+                  </p>
                 </div>
               )}
             </div>
@@ -138,6 +168,7 @@ function Navbar() {
                   const productData = products.find(
                     (product) => product._id === item._id,
                   );
+                  console.log(productData);
 
                   return (
                     <CartItem key={index} item={productData} size={item.size} />

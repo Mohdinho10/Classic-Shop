@@ -45,10 +45,10 @@ function RegisterPage() {
           {/* Name Field */}
           <div>
             <label
-              htmlFor="email"
+              htmlFor="name"
               className="block text-sm font-medium text-gray-700"
             >
-              Email Address
+              Name
             </label>
             <input
               type="text"
