@@ -1,4 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import {
+  useGetUserCartQuery,
+  useAddToCartMutation,
+  useUpdateCartMutation,
+} from "../slices/cartApiSlice";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { products } from "../assets/assets";
 
@@ -12,6 +18,13 @@ const ShopContext = createContext({
 export function ShopProvider({ children }) {
   const [search, setSearch] = useState("");
   const [cartItems, setCartItems] = useState({});
+  const { userInfo } = useSelector((state) => state.auth);
+  const userId = userInfo?._id;
+  const { data: cartData, isLoading, refetch } = useGetUserCartQuery(userId);
+  console.log(cartData);
+
+  const [addToCartApi, { isLoading: isAdding }] = useAddToCartMutation();
+  const [updateCart, { isLoading: isUpdating }] = useUpdateCartMutation();
 
   const addToCart = async (itemId, size) => {
     if (!size) {
@@ -30,7 +43,12 @@ export function ShopProvider({ children }) {
       cartData[itemId] = {};
       cartData[itemId][size] = 1;
     }
-    setCartItems(cartData);
+    try {
+      await addToCartApi({ userId, itemId, size });
+      refetch(); // Refetch cart data after adding item
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    }
   };
 
   useEffect(() => {
@@ -54,11 +72,12 @@ export function ShopProvider({ children }) {
   };
 
   const updateQuantity = async (itemId, size, quantity) => {
-    let cartData = structuredClone(cartItems);
-
-    cartData[itemId][size] = quantity;
-
-    setCartItems(cartData);
+    try {
+      await updateCart({ userId, itemId, size, quantity });
+      refetch(); // Refetch cart data after updating quantity
+    } catch (error) {
+      console.error("Error updating cart quantity:", error);
+    }
   };
 
   const getCartAmount = () => {
@@ -80,13 +99,19 @@ export function ShopProvider({ children }) {
     return totalAmount;
   };
 
+  useEffect(() => {
+    if (cartData) {
+      setCartItems(cartData);
+    }
+  }, [cartData]);
+
   return (
     <ShopContext.Provider
       value={{
         search,
-        setSearch,
         cartItems,
-        setCartItems,
+        setSearch,
+        // setCartItems,
         addToCart,
         getCartCount,
         updateQuantity,

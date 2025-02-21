@@ -1,22 +1,18 @@
-import { useEffect, useState } from "react";
-import { products } from "../assets/assets";
 import Title from "./Title";
 import ProductItem from "./ProductItem";
+import { useGetRelatedProductsQuery } from "../slices/productApiSlice";
+import Loader from "./Loader";
 
 function RelatedProducts({ category, subCategory }) {
-  const [relatedProducts, setRelatedProducts] = useState([]);
+  // const [relatedProducts, setRelatedProducts] = useState([]);
+  const { data: relatedProducts, isLoading } = useGetRelatedProductsQuery({
+    category,
+    subCategory,
+  });
 
-  useEffect(() => {
-    if (products.length > 0) {
-      let related = products.slice();
-      related = related.filter((product) => category === product.category);
-      related = related.filter(
-        (product) => subCategory === product.subCategory,
-      );
-
-      setRelatedProducts(related.slice(0, 5));
-    }
-  }, [category, subCategory]);
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <div className="my-24">
@@ -25,7 +21,7 @@ function RelatedProducts({ category, subCategory }) {
       </div>
       {/* Products */}
       <div className="grid grid-cols-1 gap-4 gap-y-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {relatedProducts.map((product, index) => (
+        {relatedProducts?.map((product, index) => (
           <ProductItem key={index} product={product} />
         ))}
       </div>

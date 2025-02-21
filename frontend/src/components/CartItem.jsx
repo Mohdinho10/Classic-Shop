@@ -4,6 +4,7 @@ import { FaRegTrashAlt } from "react-icons/fa";
 import { useShop } from "../context/ShopContext";
 
 function CartItem({ item, size }) {
+  console.log(item);
   const { updateQuantity } = useShop();
   return (
     <div className="flex items-center gap-4 border-b pb-4 last:border-none">
@@ -25,16 +26,16 @@ function CartItem({ item, size }) {
         <div className="mt-2 flex items-center gap-3">
           {/* Quantity Control */}
           <FiMinus className="h-5 w-5 cursor-pointer rounded-full border border-black text-black hover:text-gray-800" />
-          <span className="font-semibold">{item.quantity || 1}</span>
+          <span className="font-semibold">{item?.quantity || 1}</span>
           <IoMdAdd className="h-5 w-5 cursor-pointer rounded-full border border-black text-black hover:text-gray-800" />
         </div>
       </div>
 
       {/* Price and Remove */}
       <div className="flex flex-col items-end">
-        <p className="font-semibold">${item.price}</p>
+        <p className="font-semibold">${item?.price}</p>
         <FaRegTrashAlt
-          onClick={() => updateQuantity(item._id, size, 0)}
+          onClick={() => updateQuantity(item?._id, size, 0)}
           className="mt-1 h-5 w-5 cursor-pointer text-red-500 hover:text-red-700"
         />
       </div>

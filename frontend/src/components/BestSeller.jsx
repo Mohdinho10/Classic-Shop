@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
-import { products } from "../assets/assets";
 import Title from "./Title";
 import ProductItem from "./ProductItem";
+import { useGetLatestBestsellersQuery } from "../slices/productApiSlice";
+import Loader from "./Loader";
 
 function BestSeller() {
-  const [bestSeller, setBestSeller] = useState([]);
+  const {
+    data: bestsellers,
+    isLoading,
+    // isError,
+  } = useGetLatestBestsellersQuery();
 
-  useEffect(() => {
-    const bestProduct = products.filter((product) => product.bestseller);
-    setBestSeller(bestProduct);
-  }, []);
+  if (isLoading) return <Loader />;
 
   return (
     <div className="my-10">
@@ -22,7 +23,7 @@ function BestSeller() {
       </div>
       {/* Products */}
       <div className="grid grid-cols-1 gap-4 gap-y-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {bestSeller.map((product, index) => (
+        {bestsellers?.map((product, index) => (
           <ProductItem key={index} product={product} />
         ))}
       </div>

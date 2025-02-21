@@ -10,22 +10,24 @@ import RegisterPage from "./pages/RegisterPage";
 import { ShopProvider } from "./context/ShopContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// import CartPage from "./pages/CartPage";
+import ProtectedRoutes from "./components/ProtectedRoutes";
 
 function App() {
   return (
     <ShopProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<AppLayout />}>
+          <Route element={<AppLayout />}>
             <Route index path="/" element={<HomePage />} />
             <Route path="/products" element={<ProductsPage />} />
-            <Route path="/place-order" element={<PlaceOrderPage />} />
-            <Route path="/orders" element={<OrdersPage />} />
             <Route path="/products/:productId" element={<ProductPage />} />
             {/* <Route path="/cart" element={<CartPage />} /> */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route element={<ProtectedRoutes />}>
+              <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/place-order" element={<PlaceOrderPage />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>
