@@ -21,7 +21,7 @@ export function ShopProvider({ children }) {
   const { userInfo } = useSelector((state) => state.auth);
   const userId = userInfo?._id;
   const { data: cartData, isLoading, refetch } = useGetUserCartQuery(userId);
-  console.log(cartData);
+  // console.log(cartData);
 
   const [addToCartApi, { isLoading: isAdding }] = useAddToCartMutation();
   const [updateCart, { isLoading: isUpdating }] = useUpdateCartMutation();
@@ -31,28 +31,33 @@ export function ShopProvider({ children }) {
       toast.error("Select Product Size");
       return;
     }
-    let cartData = structuredClone(cartItems);
 
-    if (cartData[itemId]) {
-      if (cartData[itemId][size]) {
-        cartData[itemId][size] += 1;
-      } else {
-        cartData[itemId][size] = 1;
+    let newCartData = structuredClone(cartItems); // Clone current cart state
+
+    // Determine quantity
+    let quantity = 1;
+    if (newCartData[itemId]) {
+      if (newCartData[itemId][size]) {
+        quantity = newCartData[itemId][size] + 1;
       }
     } else {
-      cartData[itemId] = {};
-      cartData[itemId][size] = 1;
+      newCartData[itemId] = {};
     }
+
+    newCartData[itemId][size] = quantity;
+
     try {
-      await addToCartApi({ userId, itemId, size });
-      refetch(); // Refetch cart data after adding item
+      await addToCartApi({ userId, itemId, size, quantity }); // Ensure quantity is sent
+      setCartItems(newCartData); // Update local cart state only after successful API call
+      refetch(); // Refetch cart data to ensure consistency with backend
     } catch (error) {
       console.error("Error adding to cart:", error);
+      toast.error("Failed to add item to cart");
     }
   };
 
   useEffect(() => {
-    console.log(cartItems);
+    // console.log(cartItems);
   }, [cartItems]);
 
   const getCartCount = () => {

@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { useShop } from "../context/ShopContext";
 import { Link, useNavigate } from "react-router-dom";
 import CartItem from "./CartItem";
-import { products } from "../assets/assets";
 import { useSelector } from "react-redux";
 import { logout } from "../slices/authSlice";
 import { useLogoutMutation } from "../slices/userApiSlice";
@@ -17,7 +16,7 @@ function Navbar() {
   const [isSearchVisible, setIsSearchVisible] = useState(false); // State to manage search visibility
   const [openCart, setOpenCart] = useState(false);
   const [cartData, setCartData] = useState([]);
-  console.log(cartData);
+  // console.log(cartData);
   const { getCartAmount } = useShop();
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -55,8 +54,6 @@ function Navbar() {
   const toggleSearch = () => {
     setIsSearchVisible((prev) => !prev); // Toggle search visibility
   };
-
-  console.log(products);
 
   return (
     <>
@@ -161,20 +158,19 @@ function Navbar() {
               />
             </div>
             <div className="flex flex-col gap-3">
-              {cartItems && cartItems.length > 0 ? (
-                <p className="text-gray-600">Your cart is currently empty.</p>
+              {cartItems.length > 0 ? (
+                cartItems.map((item, index) => (
+                  <CartItem
+                    key={index}
+                    item={item.product}
+                    size={item.size}
+                    quantity={item.quantity}
+                  />
+                ))
               ) : (
-                cartData.map((item, index) => {
-                  const productData = products.find(
-                    (product) => product._id === item._id,
-                  );
-                  console.log(productData);
-
-                  return (
-                    <CartItem key={index} item={productData} size={item.size} />
-                  );
-                })
+                <p className="text-gray-600">Your cart is currently empty.</p>
               )}
+
               <div className="mt-6">
                 <div className="flex justify-between text-lg font-semibold">
                   <p>Total: </p>${getCartAmount()}

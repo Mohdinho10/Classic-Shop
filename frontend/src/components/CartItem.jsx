@@ -2,16 +2,18 @@ import { IoMdAdd } from "react-icons/io";
 import { FiMinus } from "react-icons/fi";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { useShop } from "../context/ShopContext";
+import { BASE_URL } from "../constants";
 
 function CartItem({ item, size }) {
-  console.log(item);
   const { updateQuantity } = useShop();
+  console.log(item, size);
   return (
     <div className="flex items-center gap-4 border-b pb-4 last:border-none">
       {/* Image */}
 
       <img
-        src={item?.image[0]}
+        // src={`${BASE_URL}item?.image[0]`}
+        src={`${BASE_URL}${item?.image[0]?.replace("public", "")}`}
         alt={item?.name}
         className="h-20 w-20 rounded object-cover"
       />
