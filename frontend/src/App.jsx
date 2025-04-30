@@ -11,6 +11,8 @@ import { ShopProvider } from "./context/ShopContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoutes from "./components/ProtectedRoutes";
+import VerifyPage from "./pages/VerifyPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -25,8 +27,10 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route element={<ProtectedRoutes />}>
+              <Route path="/verify" element={<VerifyPage />} />
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/place-order" element={<PlaceOrderPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
           </Route>
         </Routes>

@@ -2,14 +2,16 @@ import { Router } from "express";
 import { isAuthenticated } from "../middleware/authMiddleware.js";
 import {
   addToCart,
-  getUserCart,
-  updateCart,
+  deleteCartItem,
+  getCartItems,
+  updateCartItemQty,
 } from "../controllers/cartController.js";
 
 const router = Router();
 
-router.post("/get", isAuthenticated, getUserCart);
 router.post("/add", isAuthenticated, addToCart);
-router.put("/update", isAuthenticated, updateCart);
+router.get("/get/:userId", isAuthenticated, getCartItems);
+router.put("/update", isAuthenticated, updateCartItemQty);
+router.delete("/:userId/:productId", isAuthenticated, deleteCartItem);
 
 export default router;

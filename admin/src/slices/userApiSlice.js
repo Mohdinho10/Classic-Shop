@@ -13,7 +13,7 @@ export const usersApiSlice = apiSlice.injectEndpoints({
     }),
     login: builder.mutation({
       query: (data) => ({
-        url: `${USERS_URL}/login`,
+        url: `${USERS_URL}/admin/login`,
         method: "POST",
         body: data,
         credentials: "include",
@@ -23,14 +23,6 @@ export const usersApiSlice = apiSlice.injectEndpoints({
       query: () => ({
         url: `${USERS_URL}/logout`,
         method: "POST",
-        credentials: "include",
-      }),
-    }),
-    profile: builder.mutation({
-      query: (data) => ({
-        url: `${USERS_URL}/profile`,
-        method: "PUT",
-        body: data,
         credentials: "include",
       }),
     }),
@@ -48,14 +40,9 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         method: "DELETE",
         credentials: "include",
       }),
+      invalidatesTags: ["Users"], // Add this line to trigger a refetch
     }),
-    getUserDetails: builder.query({
-      query: (userId) => ({
-        url: `${USERS_URL}/${userId}`,
-        credentials: "include",
-      }),
-      keepUnusedDataFor: 5,
-    }),
+
     updateUser: builder.mutation({
       query: (data) => ({
         url: `${USERS_URL}/${data.userId}`,
@@ -64,6 +51,13 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         credentials: "include",
       }),
       invalidatesTags: ["Users"],
+    }),
+    getUserDetails: builder.query({
+      query: (userId) => ({
+        url: `${USERS_URL}/${userId}`,
+        credentials: "include",
+      }),
+      keepUnusedDataFor: 5,
     }),
   }),
 });

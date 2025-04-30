@@ -26,6 +26,15 @@
   overflow: hidden;
 }
 
+.swiper-pagination-bullet {
+  background: white;
+  opacity: 0.7;
+}
+.swiper-pagination-bullet-active {
+  background: white;
+  opacity: 1;
+}
+
 @media only screen and (max-width: 1024px) {
   .container {
     @apply w-full;

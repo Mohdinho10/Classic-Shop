@@ -1,29 +1,34 @@
 import { Router } from "express";
 import { admin, isAuthenticated } from "../middleware/authMiddleware.js";
 import {
-  calculateTotalSales,
-  calculateTotalSalesByDate,
-  countTotalOrders,
-  createOrder,
-  getOrder,
   getOrders,
-  getUserOrders,
-  markOrderAsDelivered,
-  markOrderAsPaid,
+  markAsPaid,
+  placeOrder,
+  placeOrderPaypal,
+  placeOrderStripe,
+  updateStatus,
+  userOrders,
+  verifyPaypal,
+  verifyStripe,
 } from "../controllers/orderController.js";
 
 const router = Router();
 
-router
-  .route("/")
-  .post(isAuthenticated, createOrder)
-  .get(isAuthenticated, admin, getOrders);
-router.get("mine", isAuthenticated, getUserOrders);
-router.get("/total-orders", countTotalOrders);
-router.get("/total-sales", calculateTotalSales);
-router.get("/total-sales-by-date", calculateTotalSalesByDate);
-router.get(":/id", isAuthenticated, getOrder);
-router.put(":/id/pay", isAuthenticated, markOrderAsPaid);
-router.put(":/id/deliver", isAuthenticated, admin, markOrderAsDelivered);
+// Admin Features
+router.get("/", isAuthenticated, admin, getOrders);
+router.post("/status", isAuthenticated, admin, updateStatus);
+router.post("/mark-paid", isAuthenticated, admin, markAsPaid);
+
+// Payment Features
+router.post("/place", isAuthenticated, placeOrder);
+router.post("/stripe", isAuthenticated, placeOrderStripe);
+router.post("/paypal", isAuthenticated, placeOrderPaypal);
+
+// Verify payment
+router.post("/verify-stripe", isAuthenticated, verifyStripe);
+router.post("/verify-paypal", isAuthenticated, verifyPaypal);
+
+// User Feature
+router.get("/user", isAuthenticated, userOrders);
 
 export default router;

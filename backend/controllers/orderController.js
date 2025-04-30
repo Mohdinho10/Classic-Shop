@@ -1,180 +1,212 @@
 import Order from "../models/orderModel.js";
+import Cart from "../models/cartModel.js";
 import asyncHandler from "../middleware/asyncHandler.js";
+import dotenv from "dotenv";
+import Stripe from "stripe";
 
-// Utility Function
-function calcPrices(orderItems) {
-  const itemsPrice = orderItems.reduce(
-    (acc, item) => acc + item.price * item.qty,
-    0
-  );
+dotenv.config();
 
-  const shippingPrice = itemsPrice > 100 ? 0 : 10;
-  const taxRate = 0.15;
-  const taxPrice = (itemsPrice * taxRate).toFixed(2);
+// global variables
+const currency = "usd";
+const deliveryCharge = 10;
+const origin = "http://localhost:5173"; // Replace with your frontend base URL
 
-  const totalPrice = (
-    itemsPrice +
-    shippingPrice +
-    parseFloat(taxPrice)
-  ).toFixed(2);
-
-  return {
-    itemsPrice: itemsPrice.toFixed(2),
-    shippingPrice: shippingPrice.toFixed(2),
-    taxPrice,
-    totalPrice,
-  };
-}
-
-export const createOrder = asyncHandler(async (req, res) => {
-  const { orderItems, shippingAddress, paymentMethod } = req.body;
-
-  if (orderItems && orderItems.length === 0) {
-    res.status(400);
-    throw new Error("No order items");
-  }
-
-  const itemsFromDB = await Product.find({
-    _id: { $in: orderItems.map((order) => order._id) },
-  });
-
-  const dbOrderItems = orderItems.map((itemFromClient) => {
-    const matchingItemFromDB = itemsFromDB.find(
-      (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id
-    );
-
-    if (!matchingItemFromDB) {
-      res.status(404);
-      throw new Error(`Product not found: ${itemFromClient._id}`);
-    }
-
-    return {
-      ...itemFromClient,
-      product: itemFromClient._id,
-      price: matchingItemFromDB.price,
-      _id: undefined,
-    };
-  });
-
-  const { itemsPrice, taxPrice, shippingPrice, totalPrice } =
-    calcPrices(dbOrderItems);
-
-  const order = await Order.create({
-    orderItems: dbOrderItems,
-    user: req.user._id,
-    shippingAddress,
-    paymentMethod,
-    itemsPrice,
-    taxPrice,
-    shippingPrice,
-    totalPrice,
-  });
-
-  res.status(201).json(order);
-});
+// Gateway initialize
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const getOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({}).populate("user", "id username");
+  const orders = await Order.find({});
 
-  if (!orders) throw new Error("No Order found!");
+  if (!orders) {
+    res.status(404);
+    throw new Error("No orders found!");
+  }
 
-  res.status(200).json(orders);
+  res.json(orders);
 });
 
-export const getUserOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id });
+export const updateStatus = asyncHandler(async (req, res) => {
+  const { orderId, status } = req.body;
 
-  if (!orders) throw new Error("No Order found!");
+  await Order.findByIdAndUpdate(orderId, { status });
 
-  res.status(200).json(orders);
+  res.json({ message: "Status updated" });
 });
 
-export const countTotalOrders = asyncHandler(async (req, res) => {
-  const totalOrders = await Order.countDocuments();
+export const markAsPaid = asyncHandler(async (req, res) => {
+  const { orderId } = req.body;
 
-  if (!totalOrders) throw new Error("No Order found!");
+  await Order.findByIdAndUpdate(orderId, { payment: true });
 
-  res.status(200).json({ totalOrders });
+  res.json({ message: "Payment marked as paid" });
 });
 
-export const calculateTotalSales = asyncHandler(async (req, res) => {
-  const orders = await Order.find();
-  const totalSales = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+export const placeOrder = asyncHandler(async (req, res) => {
+  const { userId, items, amount, address } = req.body;
 
-  if (!totalSales) throw new Error("No Sales!");
+  if (!userId || !items || !amount || !address) {
+    res.status(400);
+    throw new Error("Missing order details");
+  }
 
-  res.status(200).json({ totalSales });
-});
+  const orderData = {
+    userId,
+    items,
+    amount,
+    address,
+    amount,
+    paymentMethod: "COD",
+    payment: false,
+    date: Date.now(),
+  };
 
-export const calculateTotalSalesByDate = asyncHandler(async (req, res) => {
-  const salesByDate = await Order.aggregate([
-    {
-      $match: {
-        isPaid: true,
-      },
-    },
-    {
-      $group: {
-        _id: {
-          $dateToString: { format: "%Y-%m-%d", date: "$paidAt" },
-        },
-        totalSales: { $sum: "$totalPrice" },
-      },
-    },
-  ]);
+  const newOrder = await Order.create(orderData);
 
-  if (!salesByDate) throw new Error("No Sales!");
-
-  res.status(200).json(salesByDate);
-});
-
-export const getOrder = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id).populate(
-    "user",
-    "username email"
+  await Cart.findOneAndUpdate(
+    { userId },
+    { $set: { items: [] } },
+    { new: true }
   );
 
-  if (order) {
-    res.status(200).json(order);
-  } else {
-    res.status(404);
-    throw new Error("Order not found");
-  }
+  res.status(201).json({
+    success: true,
+    message: "Order placed successfully",
+    newOrder,
+  });
 });
 
-export const markOrderAsPaid = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+export const placeOrderStripe = asyncHandler(async (req, res) => {
+  const { userId, items, amount, address } = req.body;
 
-  if (order) {
-    order.isPaid = true;
-    order.paidAt = Date.now();
-    order.paymentResult = {
-      id: req.body.id,
-      status: req.body.status,
-      update_time: req.body.update_time,
-      email_address: req.body.payer.email_address,
+  if (!userId || !items || !amount || !address) {
+    res.status(400);
+    throw new Error("Missing order details");
+  }
+
+  const orderData = {
+    userId,
+    items,
+    amount,
+    address,
+    amount,
+    paymentMethod: "Stripe",
+    payment: false,
+    date: Date.now(),
+  };
+
+  const newOrder = await Order.create(orderData);
+
+  await Cart.findOneAndUpdate(
+    { userId },
+    { $set: { items: [] } },
+    { new: true }
+  );
+
+  const line_items = items.map((item) => {
+    const imageUrl = `http://localhost:3000/${item.image[0]
+      ?.replace("public", "")
+      .replace(/\\/g, "/")
+      .replace(/^\/+/, "")}`; // Remove leading slash if any
+
+    return {
+      price_data: {
+        currency,
+        product_data: {
+          name: item.name,
+          images: [imageUrl],
+        },
+        unit_amount: item.price * 100, // cents
+      },
+      quantity: item.quantity,
     };
+  });
 
-    const updateOrder = await order.save();
+  line_items.push({
+    price_data: {
+      currency,
+      product_data: {
+        name: "Delivery charges",
+      },
+      unit_amount: deliveryCharge * 100,
+    },
+    quantity: 1,
+  });
 
-    res.status(200).json(updateOrder);
-  } else {
-    res.status(404);
-    throw new Error("Order not found");
+  const session = await stripe.checkout.sessions.create({
+    success_url: `${origin}/verify?success=true&orderId=${newOrder._id}`,
+    cancel_url: `${origin}/verify?success=false&orderId=${newOrder._id}`,
+    line_items,
+    mode: "payment",
+  });
+
+  res.status(200).json({ success: true, session_url: session.url });
+});
+
+export const verifyStripe = asyncHandler(async (req, res) => {
+  const { userId, orderId, success } = req.body;
+
+  if (success === "true") {
+    await Order.findByIdAndUpdate(orderId, { payment: true });
+    await Cart.findOneAndUpdate(
+      { userId },
+      { $set: { items: [] } },
+      { new: true }
+    );
   }
 });
 
-export const markOrderAsDelivered = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+export const placeOrderPaypal = asyncHandler(async (req, res) => {
+  const { userId, items, amount, address } = req.body;
 
-  if (order) {
-    order.isDelivered = true;
-    order.deliveredAt = Date.now();
-
-    const updatedOrder = await order.save();
-    res.json(updatedOrder);
-  } else {
-    res.status(404);
-    throw new Error("Order not found");
+  if (!userId || !items || !amount || !address) {
+    res.status(400);
+    throw new Error("Missing order details");
   }
+
+  const orderData = {
+    userId,
+    items,
+    amount,
+    address,
+    paymentMethod: "PayPal",
+    payment: false,
+    date: Date.now(),
+  };
+
+  const newOrder = await Order.create(orderData);
+
+  await Cart.findOneAndUpdate(
+    { userId },
+    { $set: { items: [] } },
+    { new: true }
+  );
+
+  res.status(200).json({ success: true, order: newOrder });
+});
+
+export const verifyPaypal = asyncHandler(async (req, res) => {
+  const { userId, orderId, success } = req.body;
+
+  if (success === "true") {
+    await Order.findByIdAndUpdate(orderId, { payment: true });
+    await Cart.findOneAndUpdate(
+      { userId },
+      { $set: { items: [] } },
+      { new: true }
+    );
+    res.status(200).json({ message: "Payment verified successfully" });
+  } else {
+    res.status(400).json({ message: "Payment verification failed" });
+  }
+});
+
+export const userOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({ userId: req.user._id });
+
+  if (!orders || orders.length === 0) {
+    res.status(404);
+    throw new Error("No orders found!");
+  }
+
+  res.json(orders);
 });

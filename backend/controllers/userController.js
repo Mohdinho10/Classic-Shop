@@ -51,7 +51,7 @@ export const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.comparePassword(password))) {
-    generateToken(res, user._id);
+    generateToken(res, user);
 
     res.json({
       _id: user._id,
@@ -65,16 +65,49 @@ export const login = asyncHandler(async (req, res) => {
   }
 });
 
+// controllers/userController.js
+export const adminLogin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    throw new Error("Please provide email and password", 401);
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user || !(await user.comparePassword(password))) {
+    res.status(401);
+    throw new Error("Invalid email or password");
+  }
+
+  if (!user.isAdmin) {
+    res.status(403);
+    throw new Error("Access denied. Admins only.");
+  }
+
+  generateToken(res, user._id);
+
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    isAdmin: user.isAdmin,
+  });
+});
+
 // @desc    Auth user & clear cookie
 // @route   POST /api/users/logout
 // @access  Private
-export const logout = (req, res) => {
+export const logout = asyncHandler(async (req, res) => {
   res.cookie("jwt", "", {
     httpOnly: true,
     expires: new Date(0),
+    sameSite: "strict",
+    secure: process.env.NODE_ENV !== "development",
   });
+
   res.status(200).json({ message: "Logged out successfully" });
-};
+});
 
 // @desc    Get users
 // @route   Get /api/users
@@ -107,7 +140,7 @@ export const getUserProfile = asyncHandler(async (req, res) => {
   if (user) {
     res.json({
       _id: user._id,
-      username: user.username,
+      name: user.name,
       email: user.email,
     });
   } else {

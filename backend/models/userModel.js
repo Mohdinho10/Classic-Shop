@@ -2,12 +2,6 @@ import mongoose from "mongoose";
 import validator from "validator";
 import bcrypt from "bcrypt";
 
-const cartItemSchema = new mongoose.Schema({
-  product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-  size: { type: String, required: true },
-  quantity: { type: Number, required: true, default: 1 },
-});
-
 const userSchema = mongoose.Schema(
   {
     name: {
@@ -28,8 +22,7 @@ const userSchema = mongoose.Schema(
       minlength: [6, "Password length should be greater than 6 character"],
       select: true,
     },
-    // cartData: { type: Object, default: {} },
-    cartData: [cartItemSchema], // Store cart items as an array of objects
+
     isAdmin: {
       type: Boolean,
       required: true,
@@ -40,10 +33,12 @@ const userSchema = mongoose.Schema(
 );
 
 // middelwares
-userSchema.pre("save", async function () {
-  if (!this.isModified) return;
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
 //compare password

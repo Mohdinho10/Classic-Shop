@@ -6,7 +6,7 @@ import {
 import { BASE_URL } from "../constants";
 import { FaTrashAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
-import Loader from "../../../frontend/src/components/Loader";
+import Loader from "../component/Loader";
 import ClipLoader from "react-spinners/ClipLoader";
 
 function ProductsPage() {

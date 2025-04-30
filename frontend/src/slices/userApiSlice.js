@@ -25,40 +25,17 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         credentials: "include",
       }),
+      invalidatesTags: ["User"], // Force refresh of user-related queries
     }),
-    profile: builder.mutation({
+    getProfile: builder.query({
+      query: () => ({
+        url: `${USERS_URL}/profile`,
+        credentials: "include",
+      }),
+    }),
+    updateProfile: builder.mutation({
       query: (data) => ({
         url: `${USERS_URL}/profile`,
-        method: "PUT",
-        body: data,
-        credentials: "include",
-      }),
-    }),
-    getUsers: builder.query({
-      query: () => ({
-        url: USERS_URL,
-        credentials: "include",
-      }),
-      providesTags: ["Users"],
-      keepUnusedDataFor: 5,
-    }),
-    deleteUser: builder.mutation({
-      query: (userId) => ({
-        url: `${USERS_URL}/${userId}`,
-        method: "DELETE",
-        credentials: "include",
-      }),
-    }),
-    getUserDetails: builder.query({
-      query: (userId) => ({
-        url: `${USERS_URL}/${userId}`,
-        credentials: "include",
-      }),
-      keepUnusedDataFor: 5,
-    }),
-    updateUser: builder.mutation({
-      query: (data) => ({
-        url: `${USERS_URL}/${data.userId}`,
         method: "PUT",
         body: data,
         credentials: "include",
@@ -72,9 +49,9 @@ export const {
   useLoginMutation,
   useLogoutMutation,
   useRegisterMutation,
-  useProfileMutation,
+  useGetProfileQuery,
   useDeleteUserMutation,
-  useUpdateUserMutation,
+  useUpdateProfileMutation,
   useGetUsersQuery,
   useGetUserDetailsQuery,
 } = usersApiSlice;

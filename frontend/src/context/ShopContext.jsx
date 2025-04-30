@@ -3,123 +3,120 @@ import {
   useGetUserCartQuery,
   useAddToCartMutation,
   useUpdateCartMutation,
+  useDeleteCartItemMutation,
 } from "../slices/cartApiSlice";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { products } from "../assets/assets";
 
 const ShopContext = createContext({
   getCartCount: () => {},
   addToCart: () => {},
   updateQuantity: () => {},
   getCartAmount: () => {},
+  removeFromCart: () => {},
+  setCartItems: () => {},
 });
 
 export function ShopProvider({ children }) {
   const [search, setSearch] = useState("");
-  const [cartItems, setCartItems] = useState({});
+  const [cartItems, setCartItems] = useState([]);
   const { userInfo } = useSelector((state) => state.auth);
   const userId = userInfo?._id;
-  const { data: cartData, isLoading, refetch } = useGetUserCartQuery(userId);
-  // console.log(cartData);
+  const { data: cartData, refetch } = useGetUserCartQuery(userId);
+  const [addToCartApi] = useAddToCartMutation();
+  const [updateCart] = useUpdateCartMutation();
+  const [deleteCartItem] = useDeleteCartItemMutation();
+  const delivery = 10;
 
-  const [addToCartApi, { isLoading: isAdding }] = useAddToCartMutation();
-  const [updateCart, { isLoading: isUpdating }] = useUpdateCartMutation();
-
-  const addToCart = async (itemId, size) => {
+  const addToCart = async (productId, size) => {
+    // Changed param name from itemId
     if (!size) {
       toast.error("Select Product Size");
       return;
     }
 
-    let newCartData = structuredClone(cartItems); // Clone current cart state
-
-    // Determine quantity
-    let quantity = 1;
-    if (newCartData[itemId]) {
-      if (newCartData[itemId][size]) {
-        quantity = newCartData[itemId][size] + 1;
-      }
-    } else {
-      newCartData[itemId] = {};
-    }
-
-    newCartData[itemId][size] = quantity;
-
     try {
-      await addToCartApi({ userId, itemId, size, quantity }); // Ensure quantity is sent
-      setCartItems(newCartData); // Update local cart state only after successful API call
-      refetch(); // Refetch cart data to ensure consistency with backend
+      await addToCartApi({
+        userId,
+        productId,
+        size,
+        quantity: 1, // Default to adding 1 item
+      });
+
+      // Refresh cart data from server
+      const { data: updatedCart } = await refetch();
+      setCartItems(updatedCart.items);
     } catch (error) {
       console.error("Error adding to cart:", error);
-      toast.error("Failed to add item to cart");
+      toast.error(error.data?.message || "Failed to add item to cart");
     }
   };
-
-  useEffect(() => {
-    // console.log(cartItems);
-  }, [cartItems]);
 
   const getCartCount = () => {
-    let totalCount = 0;
-    for (const items in cartItems) {
-      for (const item in cartItems[items]) {
-        try {
-          if (cartItems[items][item] > 0) {
-            totalCount += cartItems[items][item];
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      }
-    }
-    return totalCount;
+    return Array.isArray(cartItems) ? cartItems.length : 0;
   };
 
-  const updateQuantity = async (itemId, size, quantity) => {
+  const updateQuantity = async (productId, newQuantity) => {
     try {
-      await updateCart({ userId, itemId, size, quantity });
-      refetch(); // Refetch cart data after updating quantity
+      // Optimistic update
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.productId === productId
+            ? { ...item, quantity: newQuantity }
+            : item,
+        ),
+      );
+
+      await updateCart({
+        userId,
+        productId,
+        quantity: newQuantity,
+      }).unwrap();
+
+      await refetch();
     } catch (error) {
-      console.error("Error updating cart quantity:", error);
+      refetch();
+      console.error("Update failed:", error);
+      toast.error(error.data?.message || "Failed to update quantity");
+    }
+  };
+
+  const removeFromCart = async (productId) => {
+    try {
+      await deleteCartItem({ userId, productId }).unwrap();
+      const { data: updatedCart } = await refetch();
+      setCartItems(updatedCart.items);
+      toast.success("Item removed from cart");
+    } catch (error) {
+      console.error("Failed to remove item:", error);
+      toast.error(error.data?.message || "Error removing item");
     }
   };
 
   const getCartAmount = () => {
-    let totalAmount = 0;
-    for (const items in cartItems) {
-      let itemInfo = products.find((product) => product._id === items);
-      console.log(itemInfo);
-      for (const item in cartItems[items]) {
-        try {
-          if (cartItems[items][item] > 0) {
-            totalAmount += itemInfo.price * cartItems[items][item];
-            console.log(totalAmount);
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      }
-    }
-    return totalAmount;
+    return cartItems?.reduce((total, item) => {
+      return total + (item.salePrice || item.price) * item.quantity;
+    }, 0);
   };
 
   useEffect(() => {
-    if (cartData) {
-      setCartItems(cartData);
+    if (cartData?.data?.items) {
+      setCartItems(cartData?.data?.items);
     }
   }, [cartData]);
 
   return (
     <ShopContext.Provider
       value={{
+        delivery,
         search,
         cartItems,
         setSearch,
-        // setCartItems,
+        setCartItems,
         addToCart,
         getCartCount,
         updateQuantity,
+        removeFromCart,
         getCartAmount,
       }}
     >

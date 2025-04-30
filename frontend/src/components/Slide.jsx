@@ -1,67 +1,107 @@
-import { sliderItems } from "../assets/data";
-import { useState } from "react";
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 import { Link } from "react-router-dom";
 
+const slides = [
+  {
+    title: "Men's Collection",
+    desc: "Stylish and modern outfits for every occasion.",
+    img: "https://images.unsplash.com/photo-1557684387-08927d28c72a?q=80&w=1376&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    category: "men",
+  },
+  {
+    title: "Women's Collection",
+    desc: "Elegant, chic, and comfortable fashion pieces.",
+    img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    category: "women",
+  },
+  {
+    title: "Kids' Collection",
+    desc: "Fun and colorful fashion for the little ones.",
+    img: "https://images.pexels.com/photos/1619697/pexels-photo-1619697.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    category: "kids",
+  },
+];
+
 function Slide() {
-  const [slideIndex, setSlideIndex] = useState(0);
-
-  const handleClick = (direction) => {
-    if (direction === "left") {
-      setSlideIndex(slideIndex > 0 ? slideIndex - 1 : 2);
-    } else {
-      setSlideIndex(slideIndex < 2 ? slideIndex + 1 : 0);
-    }
-  };
-
   return (
-    <div className="relative flex h-screen w-full overflow-hidden">
-      <div
-        className="absolute bottom-0 left-3 top-0 z-20 m-auto flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-[#fff7f7] opacity-90"
-        onClick={() => handleClick("left")}
+    <div className="relative h-screen w-full">
+      <Swiper
+        modules={[Navigation, Pagination, Autoplay]}
+        navigation
+        pagination={{ clickable: true }}
+        autoplay={{ delay: 4000, disableOnInteraction: false }}
+        loop={true}
+        className="h-full w-full"
       >
-        <FaArrowLeft />
-      </div>
-      <div
-        className="flex h-full transition-all duration-700 ease-in-out"
-        style={{ transform: `translateX(${slideIndex * -100}vw)` }}
-      >
-        {sliderItems.map((item, index) => (
-          <div
-            className="flex h-screen w-screen flex-col items-center md:flex-row"
-            // style={{ backgroundColor: `#${item.bg}` }}
-            key={index}
-          >
-            <div className="h-full flex-1">
-              <img
-                className="sm:h-[300px] sm:w-[400px] md:h-full md:w-full"
-                src={item.img}
-                alt=""
-              />
+        {slides.map((slide, index) => (
+          <SwiperSlide key={index}>
+            <div
+              className="relative flex h-full w-full items-center justify-center bg-cover bg-center"
+              style={{ backgroundImage: `url(${slide.img})` }}
+            >
+              {/* Black shadow overlay */}
+              <div className="absolute inset-0 bg-black opacity-50"></div>
+
+              {/* Text and Button */}
+              <div className="relative z-10 text-center text-white">
+                <h2 className="text-4xl font-bold md:text-6xl">
+                  {slide.title}
+                </h2>
+                <p className="mt-4 text-lg md:text-2xl">{slide.desc}</p>
+                <Link
+                  to={`/products?category=${slide.category}`}
+                  className="mt-8 inline-block rounded-full border border-white px-6 py-3 text-lg transition hover:bg-white hover:text-black"
+                >
+                  Collections
+                </Link>
+              </div>
             </div>
-            <div className="mr-6 flex-1 p-12">
-              <h1 className="hidden text-2xl font-bold md:block md:text-4xl">
-                {item.title}
-              </h1>
-              <p className="my-12 hidden text-xl font-medium tracking-widest md:block">
-                {item.desc}
-              </p>
-              <Link
-                to="/products"
-                className="cursor-pointer border border-black bg-transparent p-3 transition-all hover:bg-black hover:text-white"
-              >
-                VIEW COLLECTION
-              </Link>
-            </div>
-          </div>
+          </SwiperSlide>
         ))}
-      </div>
-      <div
-        className="absolute bottom-0 right-3 top-0 z-20 m-auto flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-[#fff7f7] opacity-70"
-        onClick={() => handleClick("right")}
-      >
-        <FaArrowRight />
-      </div>
+      </Swiper>
+
+      {/* Custom styles for bullets and navigation */}
+      <style>
+        {`
+          /* White pagination dots */
+          .swiper-pagination-bullet {
+            background: white;
+            opacity: 0.7;
+          }
+          .swiper-pagination-bullet-active {
+            background: white;
+            opacity: 1;
+          }
+
+          /* Navigation arrows */
+          .swiper-button-next, .swiper-button-prev {
+            color: white;
+            // background: rgba(0, 0, 0, 0.4);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+          }
+
+          // .swiper-button-next:hover, .swiper-button-prev:hover {
+          //   background: rgba(0, 0, 0, 0.7);
+          // }
+
+          /* Hide navigation buttons on mobile (width < 768px) */
+          @media (max-width: 768px) {
+            .swiper-button-next, .swiper-button-prev {
+              display: none;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 }

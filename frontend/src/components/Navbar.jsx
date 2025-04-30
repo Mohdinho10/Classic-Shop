@@ -2,7 +2,7 @@ import logo from "../assets/images/logo.png";
 import { IoIosSearch, IoMdClose } from "react-icons/io";
 import { FaRegUser } from "react-icons/fa";
 import { IoMdCart } from "react-icons/io";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useShop } from "../context/ShopContext";
 import { Link, useNavigate } from "react-router-dom";
 import CartItem from "./CartItem";
@@ -10,13 +10,13 @@ import { useSelector } from "react-redux";
 import { logout } from "../slices/authSlice";
 import { useLogoutMutation } from "../slices/userApiSlice";
 import { useDispatch } from "react-redux";
+import { apiSlice } from "../slices/apiSlice";
 
 function Navbar() {
-  const { search, setSearch, getCartCount, cartItems } = useShop();
+  const { search, setSearch, getCartCount, cartItems, setCartItems } =
+    useShop();
   const [isSearchVisible, setIsSearchVisible] = useState(false); // State to manage search visibility
   const [openCart, setOpenCart] = useState(false);
-  const [cartData, setCartData] = useState([]);
-  // console.log(cartData);
   const { getCartAmount } = useShop();
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -28,28 +28,13 @@ function Navbar() {
     try {
       await logoutApiCall().unwrap();
       dispatch(logout());
+      dispatch(apiSlice.util.resetApiState());
+      setCartItems({}); // Reset cart items on logout
       navigate("/login");
     } catch (err) {
       console.error(err);
     }
   };
-
-  useEffect(() => {
-    const tempData = [];
-
-    for (const items in cartItems) {
-      for (const item in cartItems[items]) {
-        if (cartItems[items][item] > 0) {
-          tempData.push({
-            _id: items,
-            size: item,
-            quantity: cartItems[items][item],
-          });
-        }
-      }
-    }
-    setCartData(tempData);
-  }, [cartItems]);
 
   const toggleSearch = () => {
     setIsSearchVisible((prev) => !prev); // Toggle search visibility
@@ -68,6 +53,12 @@ function Navbar() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  navigate(`/products?search=${search}`);
+                  setIsSearchVisible(false); // Hide search after navigating
+                }
+              }}
               placeholder="Search..."
               className="mb-1 hidden w-[400px] items-center justify-center rounded-full border border-gray-400 p-2 px-5 py-2 md:inline-flex"
               // className="mx-3 my-5 inline-flex w-3/4 items-center justify-center rounded-full border border-gray-400 px-5 py-2 md:w-full"
@@ -80,6 +71,12 @@ function Navbar() {
             <IoIosSearch
               className="h-7 w-7 cursor-pointer"
               onClick={toggleSearch}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  navigate(`/products?search=${search}`);
+                  setIsSearchVisible(false);
+                }
+              }}
             />
           ) : (
             <IoMdClose
@@ -95,9 +92,12 @@ function Navbar() {
             <div className="dropdown-menu absolute right-0 z-50 hidden pt-4 group-hover:block">
               {userInfo && (
                 <div className="z-10 flex w-36 flex-col gap-2 bg-slate-100 px-5 py-3 text-gray-700">
-                  <p className="cursor-pointer hover:text-balance">
+                  <Link
+                    to={"/profile"}
+                    className="cursor-pointer hover:text-balance"
+                  >
                     My profile
-                  </p>
+                  </Link>
                   <Link
                     to={"/orders"}
                     className="cursor-pointer hover:text-balance"
@@ -120,9 +120,11 @@ function Navbar() {
               className="h-6 w-6 cursor-pointer"
               onClick={() => setOpenCart(true)}
             />
-            <p className="absolute bottom-[-5px] right-[-5px] aspect-square w-4 rounded-full bg-gray-600 text-center text-[8px] leading-4 text-white">
-              {getCartCount()}
-            </p>
+            {getCartCount() > 0 && (
+              <p className="absolute bottom-[-5px] right-[-5px] aspect-square w-4 rounded-full bg-gray-600 text-center text-[8px] leading-4 text-white">
+                {getCartCount()}
+              </p>
+            )}
           </div>
         </div>
       </navbar>
@@ -158,31 +160,34 @@ function Navbar() {
               />
             </div>
             <div className="flex flex-col gap-3">
-              {cartItems.length > 0 ? (
-                cartItems.map((item, index) => (
+              {Object.keys(cartItems).length > 0 ? (
+                Object.keys(cartItems).map((productId, index) => (
                   <CartItem
                     key={index}
-                    item={item.product}
-                    size={item.size}
-                    quantity={item.quantity}
+                    item={cartItems[productId]} // Pass entire product details
+                    quantity={cartItems[productId].quantity}
                   />
                 ))
               ) : (
                 <p className="text-gray-600">Your cart is currently empty.</p>
               )}
 
-              <div className="mt-6">
-                <div className="flex justify-between text-lg font-semibold">
-                  <p>Total: </p>${getCartAmount()}
+              {getCartCount() > 0 && (
+                <div className="mt-6">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <p>Total:</p>${getCartAmount()}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setOpenCart(false);
+                      navigate("/place-order");
+                    }}
+                    className="mt-4 w-full rounded bg-black px-3 py-2 text-white"
+                  >
+                    Checkout
+                  </button>
                 </div>
-                <button
-                  onClick={() => navigate("/place-order")}
-                  className="mt-4 w-full rounded bg-black px-3 py-2 text-white"
-                  // onClick={onCheckout}
-                >
-                  Checkout
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
