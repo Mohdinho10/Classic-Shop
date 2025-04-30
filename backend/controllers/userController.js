@@ -99,7 +99,6 @@ export const adminLogin = asyncHandler(async (req, res) => {
 // @route   POST /api/users/logout
 // @access  Private
 export const logout = asyncHandler(async (req, res) => {
-  // Deleting the token
   res.cookie("jwt", "", {
     httpOnly: true,
     expires: new Date(0),
