@@ -66,6 +66,9 @@ app.use("/api/upload", uploadRoutes);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Serve uploaded files publicly at /uploads
+app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
+
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {
   // Admin routes must come first
