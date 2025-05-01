@@ -11,7 +11,7 @@ import ProtectedRoutes from "./component/ProtectedRoutes";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
         <Route element={<AppLayout />}>
           <Route element={<ProtectedRoutes />}>
