@@ -47,6 +47,7 @@ app.use("/api/upload", uploadRoutes);
 
 // Middleware for serving static files
 if (process.env.NODE_ENV === "production") {
+  const __dirname = path.resolve();
   // Serve static files for frontend
   app.use(express.static(path.join(__dirname, "frontend", "dist")));
   // Serve static files for admin panel
