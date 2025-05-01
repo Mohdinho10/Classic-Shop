@@ -21,6 +21,7 @@ const port = process.env.PORT;
 
 // middleware
 app.use(express.json());
+app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 // cookie parser middleware
 app.use(cookieParser());
@@ -43,19 +44,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// app.use(
-//   cors({
-//     origin: function (origin, callback) {
-//       if (allowedOrigins.includes(origin) || !origin) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//     },
-//     credentials: true,
-//   })
-// );
-
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
@@ -73,6 +61,7 @@ app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 if (process.env.NODE_ENV === "production") {
   // Admin routes must come first
   app.use("/admin", express.static(path.join(__dirname, "../admin/dist")));
+
   app.get("/admin/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../admin/dist/index.html"));
   });
