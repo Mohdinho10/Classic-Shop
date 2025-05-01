@@ -7,22 +7,15 @@ import Stripe from "stripe";
 dotenv.config();
 
 // global variables
-const currency = "usd";
-const deliveryCharge = 10;
-const origin = "http://localhost:5173"; // Replace with your frontend base URL
-
-// Gateway initialize
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const origin = process.env.CLIENT_URL; // e.g., "http://localhost:5173"
+const deliveryCharge = 50; // or however you calculate this
+const currency = "usd"; // or "inr", etc.
 
 export const getOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({});
 
-  if (!orders) {
-    res.status(404);
-    throw new Error("No orders found!");
-  }
-
-  res.json(orders);
+  res.status(200).json(orders);
 });
 
 export const updateStatus = asyncHandler(async (req, res) => {
@@ -88,7 +81,6 @@ export const placeOrderStripe = asyncHandler(async (req, res) => {
     items,
     amount,
     address,
-    amount,
     paymentMethod: "Stripe",
     payment: false,
     date: Date.now(),
@@ -106,7 +98,7 @@ export const placeOrderStripe = asyncHandler(async (req, res) => {
     const imageUrl = `http://localhost:3000/${item.image[0]
       ?.replace("public", "")
       .replace(/\\/g, "/")
-      .replace(/^\/+/, "")}`; // Remove leading slash if any
+      .replace(/^\/+/, "")}`; // Remove leading slashes
 
     return {
       price_data: {
@@ -115,7 +107,7 @@ export const placeOrderStripe = asyncHandler(async (req, res) => {
           name: item.name,
           images: [imageUrl],
         },
-        unit_amount: item.price * 100, // cents
+        unit_amount: item.price * 100, // Stripe expects amount in cents
       },
       quantity: item.quantity,
     };
@@ -133,8 +125,8 @@ export const placeOrderStripe = asyncHandler(async (req, res) => {
   });
 
   const session = await stripe.checkout.sessions.create({
-    success_url: `${origin}/verify?success=true&orderId=${newOrder._id}`,
-    cancel_url: `${origin}/verify?success=false&orderId=${newOrder._id}`,
+    success_url: `${origin}/verify?success=true&orderId=${newOrder._id}&paymentMethod=stripe`,
+    cancel_url: `${origin}/verify?success=false&orderId=${newOrder._id}&paymentMethod=stripe`,
     line_items,
     mode: "payment",
   });
@@ -145,6 +137,11 @@ export const placeOrderStripe = asyncHandler(async (req, res) => {
 export const verifyStripe = asyncHandler(async (req, res) => {
   const { userId, orderId, success } = req.body;
 
+  if (!userId || !orderId) {
+    res.status(400);
+    throw new Error("Missing userId or orderId");
+  }
+
   if (success === "true") {
     await Order.findByIdAndUpdate(orderId, { payment: true });
     await Cart.findOneAndUpdate(
@@ -152,6 +149,9 @@ export const verifyStripe = asyncHandler(async (req, res) => {
       { $set: { items: [] } },
       { new: true }
     );
+    res.status(200).json({ message: "Payment verified successfully" });
+  } else {
+    res.status(400).json({ message: "Payment was not successful" });
   }
 });
 
@@ -203,10 +203,6 @@ export const verifyPaypal = asyncHandler(async (req, res) => {
 export const userOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ userId: req.user._id });
 
-  if (!orders || orders.length === 0) {
-    res.status(404);
-    throw new Error("No orders found!");
-  }
-
-  res.json(orders);
+  // Always return 200 with empty array — no error thrown
+  res.status(200).json(orders);
 });

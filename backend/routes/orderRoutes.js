@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { admin, isAuthenticated } from "../middleware/authMiddleware.js";
+import {
+  isAuthenticatedAdmin,
+  isAuthenticatedClient,
+} from "../middleware/authMiddleware.js";
 import {
   getOrders,
   markAsPaid,
@@ -15,20 +18,20 @@ import {
 const router = Router();
 
 // Admin Features
-router.get("/", isAuthenticated, admin, getOrders);
-router.post("/status", isAuthenticated, admin, updateStatus);
-router.post("/mark-paid", isAuthenticated, admin, markAsPaid);
+router.get("/", isAuthenticatedAdmin, getOrders);
+router.post("/status", isAuthenticatedAdmin, updateStatus);
+router.post("/mark-paid", isAuthenticatedAdmin, markAsPaid);
 
 // Payment Features
-router.post("/place", isAuthenticated, placeOrder);
-router.post("/stripe", isAuthenticated, placeOrderStripe);
-router.post("/paypal", isAuthenticated, placeOrderPaypal);
+router.post("/place", isAuthenticatedClient, placeOrder);
+router.post("/stripe", isAuthenticatedClient, placeOrderStripe);
+router.post("/paypal", isAuthenticatedClient, placeOrderPaypal);
 
 // Verify payment
-router.post("/verify-stripe", isAuthenticated, verifyStripe);
-router.post("/verify-paypal", isAuthenticated, verifyPaypal);
+router.post("/verify-stripe", isAuthenticatedClient, verifyStripe);
+router.post("/verify-paypal", isAuthenticatedClient, verifyPaypal);
 
 // User Feature
-router.get("/user", isAuthenticated, userOrders);
+router.get("/user", isAuthenticatedClient, userOrders);
 
 export default router;

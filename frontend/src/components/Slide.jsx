@@ -7,6 +7,12 @@ import { Link } from "react-router-dom";
 
 const slides = [
   {
+    title: "Welcome to Our Fashion Store",
+    desc: "Stylish and modern outfits for every occasion.",
+    img: "https://images.pexels.com/photos/1488463/pexels-photo-1488463.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    category: "",
+  },
+  {
     title: "Men's Collection",
     desc: "Stylish and modern outfits for every occasion.",
     img: "https://images.unsplash.com/photo-1557684387-08927d28c72a?q=80&w=1376&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",

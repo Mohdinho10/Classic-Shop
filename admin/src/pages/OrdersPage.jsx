@@ -39,28 +39,30 @@ function OrdersPage() {
     );
 
   return (
-    <div className="p-6">
-      <h1 className="mb-6 text-2xl font-bold">All Orders</h1>
+    <div className="p-4 md:p-6">
+      <h1 className="mb-6 text-xl font-bold md:text-2xl">All Orders</h1>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4 md:gap-5">
         {orders.map((order) => (
           <div
             key={order._id}
-            className="rounded-md border border-gray-200 p-4 shadow-sm transition duration-200 hover:shadow-md"
+            className="rounded-md border border-gray-200 p-3 shadow-sm transition duration-200 hover:shadow-md md:p-4"
           >
-            <div className="mb-3 flex flex-col justify-between gap-2 md:flex-row md:items-center">
-              <div className="flex items-center gap-3">
-                <img src={parcelIcon} alt="parcel" className="w-10" />
+            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-2 md:gap-3">
+                <img src={parcelIcon} alt="parcel" className="w-8 md:w-10" />
                 <div>
-                  <p className="text-lg font-semibold">
+                  <p className="text-base font-semibold md:text-lg">
                     {order.address.firstName} {order.address.lastName}
                   </p>
-                  <p className="text-sm text-gray-500">{order.address.email}</p>
+                  <p className="text-xs text-gray-500 md:text-sm">
+                    {order.address.email}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex flex-col items-start gap-1 md:items-end">
-                <p className="text-sm text-gray-500">
+              <div className="flex items-center justify-between gap-2 md:flex-col md:items-end">
+                <p className="text-xs text-gray-500 md:text-sm">
                   {format(new Date(order.createdAt), "dd MMM yyyy, HH:mm")}
                 </p>
                 <select
@@ -68,7 +70,7 @@ function OrdersPage() {
                   onChange={(e) =>
                     handleStatusChange(order._id, e.target.value)
                   }
-                  className="rounded border px-3 py-1 text-sm"
+                  className="rounded border px-2 py-1 text-xs md:px-3 md:text-sm"
                 >
                   {statusOptions.map((option) => (
                     <option key={option}>{option}</option>
@@ -77,17 +79,19 @@ function OrdersPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {order.items.map((item, index) => (
-                <div key={index} className="flex items-center gap-3">
+                <div key={index} className="flex items-center gap-2 md:gap-3">
                   <img
                     src={`${BASE_URL}${item.image[0].replace("public", "")}`}
                     alt={item.name}
-                    className="h-14 w-14 rounded-md object-cover"
+                    className="h-12 w-12 rounded-md object-cover md:h-14 md:w-14"
                   />
                   <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm font-medium md:text-base">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-gray-600 md:text-sm">
                       Size: {item.size} | Qty: {item.quantity}
                     </p>
                   </div>
@@ -95,24 +99,26 @@ function OrdersPage() {
               ))}
             </div>
 
-            <div className="mt-4 flex flex-col items-start justify-between gap-2 border-t pt-4 text-sm md:flex-row md:items-center">
-              <p>
-                <strong>Total:</strong> ${order.amount}
-              </p>
-              <p>
-                <strong>Payment:</strong> {order.paymentMethod}{" "}
-                {!order.payment ? (
-                  <button
-                    onClick={() => handleMarkAsPaid(order._id)}
-                    className="ml-2 text-xs text-blue-500 underline"
-                  >
-                    Mark as Paid
-                  </button>
-                ) : (
-                  <span className="ml-2 text-green-600">(Paid)</span>
-                )}
-              </p>
-              <p>
+            <div className="mt-3 flex flex-col gap-2 border-t pt-3 text-xs md:mt-4 md:pt-4 md:text-sm">
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                <p>
+                  <strong>Total:</strong> ${order.amount}
+                </p>
+                <p>
+                  <strong>Payment:</strong> {order.paymentMethod}{" "}
+                  {!order.payment ? (
+                    <button
+                      onClick={() => handleMarkAsPaid(order._id)}
+                      className="ml-2 text-xs text-blue-500 underline"
+                    >
+                      Mark as Paid
+                    </button>
+                  ) : (
+                    <span className="ml-2 text-green-600">(Paid)</span>
+                  )}
+                </p>
+              </div>
+              <p className="break-words">
                 <strong>Shipping:</strong> {order.address.street},{" "}
                 {order.address.city}, {order.address.country}
               </p>

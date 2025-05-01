@@ -51,7 +51,7 @@ export const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.comparePassword(password))) {
-    generateToken(res, user);
+    generateToken(res, user, "jwt_client");
 
     res.json({
       _id: user._id,
@@ -85,7 +85,7 @@ export const adminLogin = asyncHandler(async (req, res) => {
     throw new Error("Access denied. Admins only.");
   }
 
-  generateToken(res, user._id);
+  generateToken(res, user, "jwt_admin");
 
   res.json({
     _id: user._id,
@@ -153,19 +153,31 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 // @route   PUT /api/users/profile
 // @access  Private
 export const updateUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const user = await User.findById(req.user._id).select("+password");
 
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
-  // If there's a user
-  user.name = req.body.name || user.name;
-  user.email = req.body.email || user.email;
+  const { name, email, oldPassword, newPassword } = req.body;
 
-  if (req.body.password) {
-    user.password = req.body.password;
+  if (name) user.name = name;
+  if (email) user.email = email;
+
+  if (newPassword) {
+    if (!oldPassword) {
+      res.status(400);
+      throw new Error("Old password is required to change password.");
+    }
+
+    const isMatch = await user.comparePassword(oldPassword);
+    if (!isMatch) {
+      res.status(400);
+      throw new Error("Old password is incorrect.");
+    }
+
+    user.password = newPassword;
   }
 
   const updatedUser = await user.save();

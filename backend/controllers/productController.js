@@ -100,16 +100,6 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   res.status(200).json(product);
 });
 
-// // Get All Products
-// export const getAllProducts = asyncHandler(async (req, res) => {
-//   // const products = await Product.find({}).limit(12).sort({ createAt: -1 });
-//   const products = await Product.find({});
-
-//   if (!products) throw new Error("No Product found!");
-
-//   res.status(200).json(products);
-// });
-
 export const getProducts = asyncHandler(async (req, res) => {
   const {
     search,
@@ -130,6 +120,8 @@ export const getProducts = asyncHandler(async (req, res) => {
     sort.price = 1; // ascending
   } else if (sortType === "high-low") {
     sort.price = -1; //descending
+  } else if (sortType === "latest") {
+    sort.createdAt = -1;
   }
 
   const skip = (page - 1) * limit;
@@ -198,31 +190,6 @@ export const getRelatedProducts = asyncHandler(async (req, res) => {
 
   res.status(200).json(relatedProducts);
 });
-
-// export const getProducts = asyncHandler(async (req, res) => {
-//   const pageSize = 6;
-
-//   const keyword = req.query.keyword
-//     ? {
-//         name: {
-//           $regex: req.query.keyword,
-//           $options: "i",
-//         },
-//       }
-//     : {};
-
-//   const count = await Product.countDocuments({ ...keyword });
-//   const products = await Product.find({ ...keyword }).limit(pageSize);
-
-//   if (!products) throw new Error("No Product found!");
-
-//   res.json({
-//     products,
-//     page: 1,
-//     pages: Math.ceil(count / pageSize),
-//     hasMore: false,
-//   });
-// });
 
 // Get Product
 export const getProduct = asyncHandler(async (req, res) => {

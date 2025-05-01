@@ -10,16 +10,13 @@ import { useNavigate } from "react-router-dom";
 
 function ProfilePage() {
   const { userInfo } = useSelector((state) => state.auth);
-  console.log(userInfo);
-
   const { data: user, isLoading, error } = useGetProfileQuery();
-  console.log(user);
   const [updateUser, { isLoading: loadingUpdate }] = useUpdateProfileMutation();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
-  console.log(username);
-  const [password, setPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -30,12 +27,22 @@ function ProfilePage() {
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      await updateUser({ userId: userInfo?._id, name: username, password });
+      await updateUser({
+        userId: userInfo?._id,
+        name: username,
+        oldPassword,
+        newPassword,
+      }).unwrap();
+
       toast.success("Profile updated successfully");
-      setPassword(""); // Clear password field
+      setOldPassword("");
+      setNewPassword("");
       navigate("/");
     } catch (err) {
-      toast.error(err?.data?.message || err.error || "Update failed");
+      console.error(err);
+      toast.error(
+        err?.data?.message || err?.error || err?.message || "Update failed",
+      );
     }
   };
 
@@ -60,10 +67,20 @@ function ProfilePage() {
           <input
             type="text"
             className="w-full rounded border p-2 focus:border-black focus:outline-none"
-            placeholder={user.name}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="mb-1 block text-gray-700">Old Password</label>
+          <input
+            type="password"
+            className="w-full rounded border p-2 focus:border-black focus:outline-none"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            placeholder="Required only if changing password"
           />
         </div>
 
@@ -72,8 +89,8 @@ function ProfilePage() {
           <input
             type="password"
             className="w-full rounded border p-2 focus:border-black focus:outline-none"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
             placeholder="Leave blank to keep current"
           />
         </div>

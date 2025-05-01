@@ -3,17 +3,18 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     screens: {
-      sm: "480px",
-      md: "768px",
-      lg: "976px",
-      xl: "1440px",
+      xs: "360px", // Small mobile devices
+      sm: "640px", // Large mobile/Small tablet
+      md: "768px", // Tablets
+      lg: "1024px", // Laptops/Desktops
+      xl: "1280px", // Large desktops
+      "2xl": "1536px", // Extra large screens
     },
     extend: {
       colors: {
         secondaryColor: "#EEDF7A",
       },
       fontFamily: {
-        // bodyFont: ["Poppins", "sans-serif"],
         bodyFont: ["Montserrat", "sans-serif"],
       },
     },

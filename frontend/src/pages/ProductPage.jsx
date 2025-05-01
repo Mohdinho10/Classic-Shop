@@ -7,26 +7,32 @@ import { useShop } from "../context/ShopContext";
 import { useGetProductDetailsQuery } from "../slices/productApiSlice";
 import { BASE_URL } from "../constants";
 import Loader from "../components/Loader";
+import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 function ProductPage() {
   const { addToCart } = useShop();
   const { productId } = useParams();
+  const { userInfo } = useSelector((state) => state.auth);
 
-  const {
-    data: product,
-    isLoading,
-    // refetch,
-  } = useGetProductDetailsQuery(productId);
+  const { data: product, isLoading } = useGetProductDetailsQuery(productId);
   const [image, setImage] = useState(null);
 
   useEffect(() => {
-    // Once the product data is loaded, set the image state to the first image
     if (product) {
       setImage(product.image[0]);
     }
-  }, [product]); // This will run whenever the product data changes
+  }, [product]);
 
   const [size, setSize] = useState("");
+
+  const handleAddToCart = () => {
+    if (!userInfo) {
+      toast.error("You need to login to add to cart");
+      return;
+    }
+    addToCart(product._id, size);
+  };
 
   return (
     <>
@@ -35,7 +41,6 @@ function ProductPage() {
       ) : (
         <>
           <div className="border-t-2 pt-10 opacity-100 transition-opacity duration-500 ease-in">
-            {/* Product Data */}
             <div className="flex flex-col gap-12 md:flex-row">
               {/* Product Images */}
               <div className="flex flex-1 flex-col-reverse gap-3 md:flex-row">
@@ -79,7 +84,9 @@ function ProductPage() {
                     {product?.sizes?.map((product, index) => (
                       <button
                         onClick={() => setSize(product)}
-                        className={`border bg-gray-100 px-4 py-2 ${product === size ? "border-orange-500" : ""}`}
+                        className={`border bg-gray-100 px-4 py-2 ${
+                          product === size ? "border-orange-500" : ""
+                        }`}
                         key={index}
                       >
                         {product}
@@ -88,8 +95,10 @@ function ProductPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => addToCart(product._id, size)}
-                  className="bg-black px-8 py-3 text-sm text-white"
+                  onClick={handleAddToCart}
+                  className={`px-8 py-3 text-sm text-white ${
+                    userInfo ? "bg-black" : "cursor-not-allowed bg-gray-400"
+                  }`}
                 >
                   ADD TO CART
                 </button>

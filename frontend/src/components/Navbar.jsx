@@ -6,18 +6,22 @@ import { useState } from "react";
 import { useShop } from "../context/ShopContext";
 import { Link, useNavigate } from "react-router-dom";
 import CartItem from "./CartItem";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../slices/authSlice";
 import { useLogoutMutation } from "../slices/userApiSlice";
-import { useDispatch } from "react-redux";
 import { apiSlice } from "../slices/apiSlice";
 
 function Navbar() {
-  const { search, setSearch, getCartCount, cartItems, setCartItems } =
-    useShop();
-  const [isSearchVisible, setIsSearchVisible] = useState(false); // State to manage search visibility
+  const {
+    search,
+    setSearch,
+    getCartCount,
+    cartItems,
+    setCartItems,
+    getCartAmount,
+  } = useShop();
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [openCart, setOpenCart] = useState(false);
-  const { getCartAmount } = useShop();
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -29,7 +33,7 @@ function Navbar() {
       await logoutApiCall().unwrap();
       dispatch(logout());
       dispatch(apiSlice.util.resetApiState());
-      setCartItems({}); // Reset cart items on logout
+      setCartItems({}); // Clear cart on logout
       navigate("/login");
     } catch (err) {
       console.error(err);
@@ -37,50 +41,44 @@ function Navbar() {
   };
 
   const toggleSearch = () => {
-    setIsSearchVisible((prev) => !prev); // Toggle search visibility
+    setIsSearchVisible((prev) => !prev);
   };
 
   return (
     <>
-      <navbar className="flex items-center justify-between gap-3">
+      {/* Navigation bar */}
+      <nav className="flex flex-wrap items-center justify-between">
         <Link to="/">
           <img src={logo} alt="classic-logo" className="w-36" />
         </Link>
-        <div>
-          {" "}
-          {isSearchVisible && (
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  navigate(`/products?search=${search}`);
-                  setIsSearchVisible(false); // Hide search after navigating
-                }
-              }}
-              placeholder="Search..."
-              className="mb-1 hidden w-[400px] items-center justify-center rounded-full border border-gray-400 p-2 px-5 py-2 md:inline-flex"
-              // className="mx-3 my-5 inline-flex w-3/4 items-center justify-center rounded-full border border-gray-400 px-5 py-2 md:w-full"
-            />
-          )}
-        </div>
 
-        <div className="flex items-center justify-center gap-4">
+        {/* Search bar for medium and above screens */}
+        {isSearchVisible && (
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                navigate(`/products?search=${search}`);
+                setIsSearchVisible(false);
+              }
+            }}
+            placeholder="Search..."
+            className="hidden w-[400px] rounded-full border border-gray-300 px-5 py-2 outline-none transition focus:border-black md:inline-flex"
+          />
+        )}
+
+        {/* Icons section */}
+        <div className="flex items-center gap-4">
           {!isSearchVisible ? (
             <IoIosSearch
-              className="h-7 w-7 cursor-pointer"
+              className="h-6 w-6 cursor-pointer sm:h-7 sm:w-7"
               onClick={toggleSearch}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  navigate(`/products?search=${search}`);
-                  setIsSearchVisible(false);
-                }
-              }}
             />
           ) : (
             <IoMdClose
-              className="h-7 w-7 cursor-pointer"
+              className="h-6 w-6 cursor-pointer sm:h-7 sm:w-7"
               onClick={toggleSearch}
             />
           )}
@@ -89,30 +87,17 @@ function Navbar() {
             <Link to={!userInfo ? "/login" : ""}>
               <FaRegUser className="h-6 w-6 cursor-pointer" />
             </Link>
-            <div className="dropdown-menu absolute right-0 z-50 hidden pt-4 group-hover:block">
-              {userInfo && (
+            {userInfo && (
+              <div className="dropdown-menu absolute right-0 z-50 hidden pt-4 group-hover:block">
                 <div className="z-10 flex w-36 flex-col gap-2 bg-slate-100 px-5 py-3 text-gray-700">
-                  <Link
-                    to={"/profile"}
-                    className="cursor-pointer hover:text-balance"
-                  >
-                    My profile
-                  </Link>
-                  <Link
-                    to={"/orders"}
-                    className="cursor-pointer hover:text-balance"
-                  >
-                    Orders
-                  </Link>
-                  <p
-                    onClick={logoutHandler}
-                    className="cursor-pointer hover:text-balance"
-                  >
+                  <Link to="/profile">My profile</Link>
+                  <Link to="/orders">Orders</Link>
+                  <p onClick={logoutHandler} className="cursor-pointer">
                     Logout
                   </p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="relative">
@@ -121,26 +106,33 @@ function Navbar() {
               onClick={() => setOpenCart(true)}
             />
             {getCartCount() > 0 && (
-              <p className="absolute bottom-[-5px] right-[-5px] aspect-square w-4 rounded-full bg-gray-600 text-center text-[8px] leading-4 text-white">
+              <p className="absolute -bottom-1 -right-1 aspect-square w-4 rounded-full bg-gray-600 text-center text-[8px] leading-4 text-white">
                 {getCartCount()}
               </p>
             )}
           </div>
         </div>
-      </navbar>
-      {/* Search Bar for small screens */}
-      <div>
-        {" "}
-        {isSearchVisible && (
+      </nav>
+
+      {/* Mobile search bar */}
+      {isSearchVisible && (
+        <div className="block px-4 pb-3 md:hidden">
           <input
+            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            type="text"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                navigate(`/products?search=${search}`);
+                setIsSearchVisible(false);
+              }
+            }}
             placeholder="Search..."
-            className="mt-2 block w-[300px] rounded-full border border-gray-300 p-2 px-5 py-2 outline-none md:hidden"
+            className="w-full rounded-full border border-gray-300 px-5 py-2 text-sm outline-none transition focus:border-black"
           />
-        )}
-      </div>
+        </div>
+      )}
+
       {/* Cart Drawer */}
       {openCart && (
         <div className="fixed inset-0 z-50 flex">
@@ -159,12 +151,13 @@ function Navbar() {
                 onClick={() => setOpenCart(false)}
               />
             </div>
+
             <div className="flex flex-col gap-3">
               {Object.keys(cartItems).length > 0 ? (
                 Object.keys(cartItems).map((productId, index) => (
                   <CartItem
                     key={index}
-                    item={cartItems[productId]} // Pass entire product details
+                    item={cartItems[productId]}
                     quantity={cartItems[productId].quantity}
                   />
                 ))

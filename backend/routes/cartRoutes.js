@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { isAuthenticated } from "../middleware/authMiddleware.js";
+import { isAuthenticatedClient } from "../middleware/authMiddleware.js";
 import {
   addToCart,
   deleteCartItem,
@@ -9,9 +9,9 @@ import {
 
 const router = Router();
 
-router.post("/add", isAuthenticated, addToCart);
-router.get("/get/:userId", isAuthenticated, getCartItems);
-router.put("/update", isAuthenticated, updateCartItemQty);
-router.delete("/:userId/:productId", isAuthenticated, deleteCartItem);
+router.post("/add", isAuthenticatedClient, addToCart);
+router.get("/get/:userId", isAuthenticatedClient, getCartItems);
+router.put("/update", isAuthenticatedClient, updateCartItemQty);
+router.delete("/:userId/:productId", isAuthenticatedClient, deleteCartItem);
 
 export default router;

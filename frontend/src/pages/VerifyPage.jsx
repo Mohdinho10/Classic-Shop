@@ -11,34 +11,29 @@ const VerifyPage = () => {
   const location = useLocation();
   const { userInfo } = useSelector((state) => state.auth);
   const userId = userInfo?._id;
-  const [verifyStripePayment] = useVerifyStripePaymentMutation();
-  const [verifyPaypalPayment] = useVerifyPaypalPaymentMutation();
+
+  const [verifyStripePayment, { isLoading: isStripeVerifying }] =
+    useVerifyStripePaymentMutation();
+  const [verifyPaypalPayment, { isLoading: isPaypalVerifying }] =
+    useVerifyPaypalPaymentMutation();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const success = searchParams.get("success");
     const orderId = searchParams.get("orderId");
-    const paymentMethod = searchParams.get("paymentMethod"); // detect payment method!
+    const paymentMethod = searchParams.get("paymentMethod");
 
     const verifyPayment = async () => {
-      if (success === "true" && orderId) {
+      if (success && orderId && paymentMethod && userId) {
         try {
           if (paymentMethod === "paypal") {
-            await verifyPaypalPayment({
-              userId,
-              orderId,
-              success,
-            });
-          } else {
-            await verifyStripePayment({
-              userId,
-              orderId,
-              success,
-            });
+            await verifyPaypalPayment({ userId, orderId, success }).unwrap();
+          } else if (paymentMethod === "stripe") {
+            await verifyStripePayment({ userId, orderId, success }).unwrap();
           }
           navigate("/orders");
         } catch (error) {
-          console.error("Verification failed", error);
+          console.error("Payment verification failed:", error);
           navigate("/");
         }
       } else {
@@ -50,14 +45,18 @@ const VerifyPage = () => {
   }, [
     location.search,
     navigate,
-    verifyStripePayment,
-    verifyPaypalPayment,
     userId,
+    verifyPaypalPayment,
+    verifyStripePayment,
   ]);
 
   return (
     <div className="flex h-screen items-center justify-center">
-      <h1 className="text-2xl font-bold">Verifying payment, please wait...</h1>
+      <h1 className="text-center text-2xl font-bold">
+        {isStripeVerifying || isPaypalVerifying
+          ? "Verifying payment, please wait..."
+          : "Preparing verification..."}
+      </h1>
     </div>
   );
 };

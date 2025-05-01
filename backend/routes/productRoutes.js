@@ -1,7 +1,10 @@
 import { Router } from "express";
 // import formidable from "express-formidable";
 import multer from "multer";
-import { admin, isAuthenticated } from "../middleware/authMiddleware.js";
+import {
+  isAuthenticatedAdmin,
+  isAuthenticatedClient,
+} from "../middleware/authMiddleware.js";
 import {
   addProduct,
   addProductReview,
@@ -30,14 +33,9 @@ const upload = multer({ storage });
 router
   .route("/")
   .get(getProducts)
-  .post(
-    isAuthenticated,
-    admin,
-    upload.array("images"),
-    addProduct
-  );
+  .post(isAuthenticatedAdmin, upload.array("images"), addProduct);
 
-router.post("/:id/reviews", isAuthenticated, addProductReview);
+router.post("/:id/reviews", isAuthenticatedClient, addProductReview);
 
 router.get("/related", getRelatedProducts);
 router.get("/bestsellers", getLatestBestsellers);
@@ -47,7 +45,7 @@ router.get("/latest", getLatestCollections);
 router
   .route("/:id")
   .get(getProduct)
-  .put(isAuthenticated, admin,  updateProduct)
-  .delete(isAuthenticated, admin, deleteProduct);
+  .put(isAuthenticatedAdmin, updateProduct)
+  .delete(isAuthenticatedAdmin, deleteProduct);
 
 export default router;

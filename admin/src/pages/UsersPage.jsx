@@ -46,9 +46,13 @@ function UsersPage() {
   const filteredUsers = users.filter((u) => u._id !== userInfo._id);
 
   return (
-    <div className="pt-12">
-      <h1 className="mb-6 text-center text-2xl font-bold">Users Management</h1>
-      <div className="overflow-x-auto">
+    <div className="p-4 md:p-6">
+      <h1 className="mb-6 text-center text-xl font-bold md:text-2xl">
+        Users Management
+      </h1>
+
+      {/* Desktop Table View */}
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full divide-y divide-gray-200 border">
           <thead className="bg-gray-100">
             <tr>
@@ -82,25 +86,25 @@ function UsersPage() {
                 </td>
                 <td className="flex items-center gap-4 px-4 py-2 text-sm">
                   {!user.isAdmin && (
-                    <button
-                      onClick={() => handleToggleAdmin(user)}
-                      className="text--gray-600 hover:text--gray-600"
-                      title="Toggle Admin"
-                    >
-                      <FaUserShield />
-                    </button>
-                  )}
-                  {!user.isAdmin && (
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowModal(true);
-                      }}
-                      className="text-red-600 hover:text-red-800"
-                      title="Delete User"
-                    >
-                      <FaTrash />
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleToggleAdmin(user)}
+                        className="text-gray-600 hover:text-gray-800"
+                        title="Toggle Admin"
+                      >
+                        <FaUserShield className="text-lg" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowModal(true);
+                        }}
+                        className="text-red-600 hover:text-red-800"
+                        title="Delete User"
+                      >
+                        <FaTrash className="text-lg" />
+                      </button>
+                    </>
                   )}
                 </td>
               </tr>
@@ -109,10 +113,63 @@ function UsersPage() {
         </table>
       </div>
 
+      {/* Mobile Card View */}
+      <div className="space-y-4 md:hidden">
+        {filteredUsers.map((user) => (
+          <div
+            key={user._id}
+            className="rounded-lg border bg-white p-4 shadow-sm"
+          >
+            <div className="mb-2 flex items-start justify-between">
+              <div>
+                <h3 className="font-medium">{user.name}</h3>
+                <a
+                  href={`mailto:${user.email}`}
+                  className="text-sm text-gray-600"
+                >
+                  {user.email}
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                {!user.isAdmin && (
+                  <>
+                    <button
+                      onClick={() => handleToggleAdmin(user)}
+                      className="text-gray-600 hover:text-gray-800"
+                      title="Toggle Admin"
+                    >
+                      <FaUserShield className="text-xl" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setShowModal(true);
+                      }}
+                      className="text-red-600 hover:text-red-800"
+                      title="Delete User"
+                    >
+                      <FaTrash className="text-xl" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="text-sm">
+              <span className="text-gray-600">Admin: </span>
+              {user.isAdmin ? (
+                <span className="font-semibold text-green-600">Yes</span>
+              ) : (
+                <span className="text-gray-600">No</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Modal */}
       {showModal && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="w-full max-w-sm rounded-md bg-white p-6 shadow-lg">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
+          <div className="w-full max-w-sm rounded-md bg-white p-4 shadow-lg md:p-6">
             <h3 className="mb-4 text-lg font-semibold text-gray-800">
               Confirm Deletion
             </h3>
@@ -126,13 +183,13 @@ function UsersPage() {
                   setShowModal(false);
                   setSelectedUser(null);
                 }}
-                className="rounded border px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                className="rounded border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                className="rounded bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700"
               >
                 Delete
               </button>
