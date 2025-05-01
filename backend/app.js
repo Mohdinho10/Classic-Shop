@@ -1,9 +1,10 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
 import { notFound, errorHandler } from "./middleware/ErrorMiddleware.js";
 import productRoutes from "./routes/productRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
@@ -24,20 +25,36 @@ app.use(express.urlencoded({ extended: true }));
 // cookie parser middleware
 app.use(cookieParser());
 
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://classic-shop.onrender.com",
+];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (allowedOrigins.includes(origin) || !origin) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (allowedOrigins.includes(origin) || !origin) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//   })
+// );
 
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
@@ -45,22 +62,22 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/upload", uploadRoutes);
 
-// Middleware for serving static files
-if (process.env.NODE_ENV === "production") {
-  const __dirname = path.resolve();
-  // Serve static files for frontend
-  app.use(express.static(path.join(__dirname, "frontend", "dist")));
-  // Serve static files for admin panel
-  app.use(express.static(path.join(__dirname, "admin", "dist")));
+// Required for __dirname in ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  // Route to serve frontend app
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+// Serve static files in production
+if (process.env.NODE_ENV === "production") {
+  // Admin routes must come first
+  app.use("/admin", express.static(path.join(__dirname, "../admin/dist")));
+  app.get("/admin/*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../admin/dist/index.html"));
   });
 
-  // Admin route handling if needed
-  app.get("/admin/*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "admin", "dist", "index.html"));
+  // Frontend static files
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
   });
 }
 
