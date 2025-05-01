@@ -45,25 +45,22 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/upload", uploadRoutes);
 
-// Serve static files
+// Middleware for serving static files
 if (process.env.NODE_ENV === "production") {
-  const __dirname = path.resolve();
-  // app.use(express.static(path.join(__dirname, "frontend", "dist"))); // Serve frontend build
-  app.use(express.static(path.join(__dirname, "/frontend/dist")));
-  app.use(
-    "/uploads",
-    express.static(path.join(__dirname, "public", "uploads"))
-  ); // Serve uploads
+  // Serve static files for frontend
+  app.use(express.static(path.join(__dirname, "frontend", "dist")));
+  // Serve static files for admin panel
+  app.use(express.static(path.join(__dirname, "admin", "dist")));
 
-  app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"))
-  );
-} else {
-  const __dirname = path.resolve();
-  app.use(
-    "/uploads",
-    express.static(path.join(__dirname, "public", "uploads"))
-  ); // Serve uploads in development
+  // Route to serve frontend app
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+  });
+
+  // Admin route handling if needed
+  app.get("/admin/*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "admin", "dist", "index.html"));
+  });
 }
 
 app.use(notFound);
