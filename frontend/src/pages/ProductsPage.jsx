@@ -1,35 +1,40 @@
 import { useState } from "react";
+import { MdKeyboardArrowRight } from "react-icons/md";
 import ProductItem from "../components/ProductItem";
+import { useShop } from "../context/ShopContext";
 import { useGetProductsQuery } from "../slices/productApiSlice";
 import Title from "../components/Title";
 import Loader from "../components/Loader";
 
-const categoryOptions = [
-  { label: "Men", value: "Men" },
-  { label: "Women", value: "Women" },
-  { label: "Kids", value: "Kids" },
-];
-
-const subCategoryOptions = [
-  { label: "Top Wear", value: "topWear" },
-  { label: "Bottom Wear", value: "bottomWear" },
-  { label: "Winter Wear", value: "winterWear" },
-];
-
 function ProductsPage() {
+  const { search } = useShop();
+  const [showFilter, setShowFilter] = useState(false);
+  const [sortType, setSortType] = useState("relevant");
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
-  const [sortType, setSortType] = useState("relevant");
   const [page, setPage] = useState(1);
   const limit = 12;
 
   const { data: productsData, isLoading } = useGetProductsQuery({
+    search,
     category,
     subCategory,
     sortType,
     page,
     limit,
   });
+
+  const categoryOptions = [
+    { label: "Men", value: "Men" },
+    { label: "Women", value: "Women" },
+    { label: "Kids", value: "Kids" },
+  ];
+
+  const subCategoryOptions = [
+    { label: "Top Wear", value: "topWear" },
+    { label: "Bottom Wear", value: "bottomWear" },
+    { label: "Winter Wear", value: "winterWear" },
+  ];
 
   const toggleCategory = (e) => {
     const value = e.target.value;
@@ -57,11 +62,12 @@ function ProductsPage() {
 
   return (
     <div className="border-t px-4 pt-10 sm:px-6 lg:px-8">
-      <div className="mb-6 flex items-center justify-between">
+      {/* Title and Sorting */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Title text1="ALL" text2="COLLECTION" />
         <select
           onChange={(e) => setSortType(e.target.value)}
-          className="rounded border px-2 py-1 text-sm text-black"
+          className="w-full rounded border px-2 py-1 text-sm text-black sm:w-auto"
         >
           <option value="relevant">Sort by: Relevant</option>
           <option value="low-high">Sort by: Low to High</option>
@@ -70,28 +76,40 @@ function ProductsPage() {
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Filters */}
+        {/* Sidebar / Toggle Filter */}
         <div className="w-full lg:w-1/4">
-          <div className="space-y-6">
+          {/* Toggle on Mobile */}
+          <p
+            onClick={() => setShowFilter(!showFilter)}
+            className="mb-2 flex cursor-pointer items-center gap-1 text-lg font-semibold lg:hidden"
+          >
+            FILTERS
+            <MdKeyboardArrowRight
+              className={`h-6 w-6 transition-transform duration-75 ${
+                showFilter ? "rotate-90" : ""
+              }`}
+            />
+          </p>
+
+          <div
+            className={`space-y-6 ${showFilter ? "block" : "hidden"} lg:block`}
+          >
             {/* Category Filter */}
             <div className="rounded border p-4">
               <p className="mb-2 text-sm font-semibold text-black">
                 CATEGORIES
               </p>
               <div className="flex flex-col gap-2 text-sm text-black">
-                {categoryOptions.map((categoryOption) => (
-                  <label
-                    key={categoryOption.label}
-                    className="flex items-center gap-2"
-                  >
+                {categoryOptions.map(({ label, value }) => (
+                  <label key={value} className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      value={categoryOption.value}
-                      onChange={toggleCategory}
-                      checked={category.includes(categoryOption.value)}
                       className="h-4 w-4 accent-black"
+                      value={value}
+                      onChange={toggleCategory}
+                      checked={category.includes(value)}
                     />
-                    {categoryOption.label}
+                    {label}
                   </label>
                 ))}
               </div>
@@ -101,19 +119,16 @@ function ProductsPage() {
             <div className="rounded border p-4">
               <p className="mb-2 text-sm font-semibold text-black">TYPE</p>
               <div className="flex flex-col gap-2 text-sm text-black">
-                {subCategoryOptions.map((subCategoryOption) => (
-                  <label
-                    key={subCategoryOption.label}
-                    className="flex items-center gap-2"
-                  >
+                {subCategoryOptions.map(({ label, value }) => (
+                  <label key={value} className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      value={subCategoryOption.value}
-                      onChange={toggleSubCategory}
-                      checked={subCategory.includes(subCategoryOption.value)}
                       className="h-4 w-4 accent-black"
+                      value={value}
+                      onChange={toggleSubCategory}
+                      checked={subCategory.includes(value)}
                     />
-                    {subCategoryOption.label}
+                    {label}
                   </label>
                 ))}
               </div>
@@ -121,7 +136,7 @@ function ProductsPage() {
           </div>
         </div>
 
-        {/* Products Grid */}
+        {/* Product Grid */}
         <div className="w-full lg:w-3/4">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
             {productsData?.products?.map((product) => (
