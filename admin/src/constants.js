@@ -1,8 +1,6 @@
 export const BASE_URL =
   // eslint-disable-next-line no-undef
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "https://classic-shop.onrender.com/admin";
+  process.env.NODE_ENV === "development" ? "http://localhost:3000" : "";
 export const PRODUCTS_URL = "/api/products";
 export const USERS_URL = "/api/users";
 export const ORDERS_URL = "/api/orders";
