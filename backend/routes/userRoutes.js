@@ -18,17 +18,25 @@ import {
 
 const router = Router();
 
+// Public routes
 router.post("/register", register);
 router.post("/login", login);
-// For admin login
 router.post("/admin/login", adminLogin);
 
-// The following routes are only for authenticated users
-router.use(isAuthenticatedClient);
-router.post("/logout", logout);
-router.route("/profile").get(getUserProfile).put(updateUserProfile);
-router.use(isAuthenticatedAdmin);
-router.route("/:id").delete(deleteUser).get(getUser).put(updateUser);
-router.get("/", getUsers);
+// Authenticated client routes
+router.post("/logout", isAuthenticatedClient, logout);
+router
+  .route("/profile")
+  .get(isAuthenticatedClient, getUserProfile)
+  .put(isAuthenticatedClient, updateUserProfile);
+
+// Admin routes
+router
+  .route("/:id")
+  .delete(isAuthenticatedAdmin, deleteUser)
+  .get(isAuthenticatedAdmin, getUser)
+  .put(isAuthenticatedAdmin, updateUser);
+
+router.get("/", isAuthenticatedAdmin, getUsers);
 
 export default router;
